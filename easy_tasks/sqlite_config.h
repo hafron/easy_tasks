@@ -1,1 +1,0 @@
-#define DATABASE_FILE "data.db"

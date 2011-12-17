@@ -1,1 +1,0 @@
-int add_task(struct task *);

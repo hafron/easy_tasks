@@ -12,3 +12,5 @@ sqlite.o: sqlite.c
 	$(CC) -c  $(CFLAGS) sqlite.c
 clean:
 	rm *.o et
+install: et
+	cp et /usr/bin/

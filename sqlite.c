@@ -4,11 +4,21 @@
 #include "easy_tasks.h" 
 #include "sqlite_config.h" 
 
-void connect( ,sqlite3 * db) {
+void driver_connect(sqlite3 * db) {
 
 }
 
-int add_task(struct task * task_to_add)
+int driver_add_task(struct task * task_to_add)
+{
+
+  return 1;
+}
+int driver_add_category(struct category * category_to_add)
+{
+
+  return 1;
+}
+int driver_show_categories()
 {
 
   return 1;

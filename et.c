@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <regex.h>
 
@@ -11,18 +12,23 @@
 /**
  * OUTPUT_FORMAT defines format of output. Current avalible values are "STDOUT" - for text mode usage and JSON - if you want to get output in JSON format.
  */
-char OUTPUT_FORMAT[7] = "STDOUT";
+char OUTPUT_FORMAT[MAX_FORMAT_LEN] = "STDOUT";
 char ERRORS[MAX_ERRORS][MAX_ERROR_LEN];
 int ERR_NO = 0;
+const char * AVAILABLE_FORMATS[MAX_FORMATS] = {"STDOUT", "JSON", "", "", ""};
 
 void throw_errors();
 void add_category(const struct category *);
 void add_task(const struct task *);
 void show_categories();
+void show_tasks(int, char *, int);
 void error(char *);
 void get_category_values(int, char **, struct category *);
 void get_task_values(int, char **, struct task *);
 
+char * upper(char *);
+int in_array(char *, const char **, int);
+void set_output_format(char *);
 
 /**
  * Function reads console params and calls appropriate functions.
@@ -33,6 +39,14 @@ int main(int agrc, char * agrv[])
   int i, j;
   struct category category_to_add;
   struct task task_to_add;
+  for(i=1;i<agrc;i++)
+  {
+    if(strcmp(agrv[i], "-f") == 0)
+    {
+	  if(i+1 < agrc)
+		set_output_format(agrv[i+1]);
+	}
+  }
   for(i=1;i<agrc;i++)
   {
     if(strcmp(agrv[i], "-a") == 0)
@@ -67,8 +81,14 @@ int main(int agrc, char * agrv[])
   for(i=1;i<agrc;i++)
   {
     if(strcmp(agrv[i], "-c") == 0)
+    {
       show_categories();
       throw_errors();
+    } else if(strcmp(agrv[i], "-t") == 0)
+    {
+      show_tasks(-1, "date", 1);
+      throw_errors();
+    }
   }
   return 0;
 }
@@ -162,7 +182,20 @@ void get_task_values(int agrc, char * agrv[],  struct task * task_to_add)
       else
         error("TASK_NO_DESC");
     }
-    
+
+    if(strcmp(id, "") == 0)
+    {
+      
+    }
+    if(strcmp(category, "") == 0)
+      error("TASK_NO_CATEGORY");
+    if(date == -1)
+      error("TASK_NO_DATE");
+    if(time_needed == -1)
+      error("TASK_NO_TIME_NEEDED");
+    if(strcmp(desc, "") == 0)
+      error("TASK_NO_DESC");
+
     strcpy(task_to_add->id, id);
     strcpy(task_to_add->category, category);
     task_to_add->date = date;
@@ -206,10 +239,22 @@ void show_categories()
   puts("Cat");
 }
 
+void show_tasks(int limit, char * by, int desc)
+{
+
+}
+
 void throw_errors()
 {
+  int i;
   if(ERR_NO != 0)
+  {
+    for(i=0;i<ERR_NO;i++)
+    {
+      fprintf(stderr, "%s\n", ERRORS[i]);
+    }
     exit(1);
+  }
 }
 
 /**
@@ -226,6 +271,8 @@ void throw_errors()
  */
 void error(char * err_code)
 {
+ /* if( ! in_array(err_code, ERRORS, ERR_NO))
+  {*/
   if(strcmp(err_code, "CATEGORY_NO_ID") == 0)
   {
     if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
@@ -304,4 +351,29 @@ void error(char * err_code)
       ERR_NO++;
     }
   }
+ /* }*/
+}
+char * upper(char * str)
+{
+  int i;
+  for(i=0;i<strlen(str);i++)
+  {
+    str[i] = toupper(str[i]);
+  }
+  return str;
+}
+int in_array(char * str, const char * array[], int len)
+{
+  int i;
+  for(i=0;i<len;i++)
+  {
+    if(strcmp(str, array[i]) == 0)
+      return 1;
+  }
+  return 0;
+}
+void set_output_format(char * format)
+{
+	if(in_array(upper(format), AVAILABLE_FORMATS, MAX_FORMATS))
+	  strcpy(OUTPUT_FORMAT, format);
 }

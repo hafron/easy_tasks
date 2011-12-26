@@ -6,6 +6,9 @@
 #define MAX_ERRORS 7
 #define MAX_ERROR_LEN 100
 
+#define MAX_FORMATS 5
+#define MAX_FORMAT_LEN 7
+
 struct task {
   char id[ID_LEN];
   char category[ID_LEN];

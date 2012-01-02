@@ -4,10 +4,11 @@
 #define DATA_FORMAT "%F"
 
 #define MAX_ERRORS 7
-#define MAX_ERROR_LEN 100
 
 #define MAX_FORMATS 5
 #define MAX_FORMAT_LEN 7
+
+#define COL_TITLE_LEN 20
 
 struct task {
   char id[ID_LEN];
@@ -21,3 +22,4 @@ struct category {
   char id[ID_LEN];
   char name[CATEGORY_LEN];
 };
+

@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -ansi -pedantic
-CLINK=-lm
+CLINK=-lm -lsqlite3
 
 all: et
 
@@ -9,7 +9,7 @@ et: et.o sqlite.o
 et.o: et.c
 	$(CC) -c  $(CFLAGS) et.c
 sqlite.o: sqlite.c
-	$(CC) -c  $(CFLAGS) sqlite.c
+	$(CC) -c $(CFLAGS) sqlite.c
 clean:
 	rm *.o et
 install: et

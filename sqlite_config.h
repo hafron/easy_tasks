@@ -1,1 +1,1 @@
-#define DATABASE_FILE "data.db"
+#define SQLITE_DATABASE_FILE "../data.db"

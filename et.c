@@ -251,7 +251,7 @@ void add_category(struct category * category_to_add)
   {
     if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
     {
-      puts("New category added..");
+      puts("New category added.");
     } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
     {
       printf("{\"id\": \"%s\",\"name\": \"%s\"}", category_to_add->id, category_to_add->name);
@@ -264,11 +264,19 @@ void add_category(struct category * category_to_add)
 
 void add_task(struct task * task_to_add)
 {
-  puts(task_to_add->id);
-  puts(task_to_add->category);
-  printf("%d\n", (int)task_to_add->date);
-  printf("%d\n", task_to_add->time_needed);
-  puts(task_to_add->desc);
+  if(driver_add_task(task_to_add) == 1)
+  {
+    if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
+    {
+      puts("New task added.");
+    } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
+    {
+      printf("{\"id\": \"%s\",\"category\": \"%s\",\"date\": \"%d\",\"time_needed\": \"%d\",\"desc\": \"%s\"}", task_to_add->id, task_to_add->category, (int)task_to_add->date, task_to_add->time_needed, task_to_add->desc);
+    }
+  } else
+  {
+    throw_errors();
+  }
 }
 
 /**
@@ -279,7 +287,32 @@ void add_task(struct task * task_to_add)
  */
 void show_categories()
 {
-  puts("Cat");
+  char row[2][CATEGORY_LEN];
+  int nr = 0;
+  driver_category_init();
+  
+  if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
+  {
+      puts("+------+----------------------------------------+");
+      puts("|  id  |                  name                  |");
+      puts("+------+----------------------------------------+");
+      while(driver_category_next(row))
+      {
+        printf("|%6s|%40s|\n", row[0], row[1]);
+      }
+      puts("+------+----------------------------------------+");
+  } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
+  {
+      printf("{");
+      while(driver_category_next(row))
+      {
+        if(nr >= 1)
+          printf(",");
+        printf("\"%d\":{\"id\": \"%s\", \"name\": \"%s\"}", nr, row[0], row[1]);
+        nr++;
+      }
+      printf("}");
+  }
 }
 
 void show_tasks(int limit, char * sort_by, int desc)

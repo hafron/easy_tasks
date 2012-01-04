@@ -36,7 +36,7 @@ void set_output_format(char *);
  */
 int main(int agrc, char * agrv[])
 {
-  int i, j, limit=-1, desc=0;
+  int i, j, limit=50, desc=0;
   char sort_by[COL_TITLE_LEN] = "date";
   struct category category_to_add;
   struct task task_to_add;
@@ -287,28 +287,28 @@ void add_task(struct task * task_to_add)
  */
 void show_categories()
 {
-  char row[2][CATEGORY_LEN];
+  struct category category_instance;
   int nr = 0;
-  driver_category_init();
+  driver_categories_init();
   
   if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
   {
-      puts("+------+----------------------------------------+");
-      puts("|  id  |                  name                  |");
-      puts("+------+----------------------------------------+");
-      while(driver_category_next(row))
+      puts("+------+------------------------------+");
+      puts("|  id  |             name             |");
+      puts("+------+------------------------------+");
+      while(driver_category_next(&category_instance))
       {
-        printf("|%6s|%40s|\n", row[0], row[1]);
+        printf("|%6s|%30s|\n", category_instance.id, category_instance.name);
       }
-      puts("+------+----------------------------------------+");
+      puts("+------+------------------------------+");
   } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
   {
       printf("{");
-      while(driver_category_next(row))
+      while(driver_category_next(&category_instance))
       {
         if(nr >= 1)
           printf(",");
-        printf("\"%d\":{\"id\": \"%s\", \"name\": \"%s\"}", nr, row[0], row[1]);
+        printf("\"%d\":{\"id\": \"%s\", \"name\": \"%s\"}", nr, category_instance.id, category_instance.name);
         nr++;
       }
       printf("}");
@@ -317,8 +317,42 @@ void show_categories()
 
 void show_tasks(int limit, char * sort_by, int desc)
 {
-  puts(sort_by);
-  printf("%d", limit);
+  struct task task_instance;
+  char date_str[80];
+  struct tm * timeinfo;
+
+  int nr = 0;
+  
+  driver_tasks_init(limit, sort_by, desc);
+  
+  if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
+  {
+      puts("+------+----------+----------+------+------------------------------------------------------+");
+      puts("|  id  | category |   date   | time |                         desc                         |");
+      puts("+------+----------+----------+------+------------------------------------------------------+");
+      while(driver_task_next(&task_instance))
+      {
+        timeinfo = localtime ( &task_instance.date );
+        strftime (date_str,80,DATA_FORMAT,timeinfo);        
+        
+        printf("|%6s|%10s|%10s|%6d|%54s|\n", task_instance.id, task_instance.category, date_str, task_instance.time_needed, task_instance.desc);
+      }
+      puts("+------+----------+----------+------+------------------------------------------------------+");
+  } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
+  {
+      printf("{");
+      while(driver_task_next(&task_instance))
+      {
+        if(nr >= 1)
+          printf(",");
+        
+        timeinfo = localtime ( &task_instance.date );
+        strftime (date_str,80,DATA_FORMAT,timeinfo);  
+        printf("\"%d\":{\"id\": \"%s\", \"category\": \"%s\", \"date\": \"%d\", \"time\": \"%d\", \"desc\": \"%s\"}", nr, task_instance.id, task_instance.category, (int)task_instance.date, task_instance.time_needed, task_instance.desc);
+        nr++;
+      }
+      printf("}");
+  }
 }
 
 void throw_errors()

@@ -1,7 +1,7 @@
 #define DESC_LEN 1000
 #define ID_LEN 7
 #define CATEGORY_LEN 100
-#define DATA_FORMAT "%F"
+#define DATA_FORMAT "%Y-%m-%d"
 
 #define MAX_ERRORS 7
 

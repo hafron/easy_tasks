@@ -2,6 +2,7 @@
 #include <time.h>
 #include <string.h>
 #include <sqlite3.h>
+#include <time.h>
 #include "easy_tasks.h" 
 #include "sqlite_config.h" 
 
@@ -19,11 +20,11 @@ int driver_connect(sqlite3 ** db) {
     if( rc ){
       if(strcmp(OUTPUT_FORMAT, "STDOUT") == 0)
       {
-        sprintf(ERRORS[ERR_NO], "Can't open database: %s", sqlite3_errmsg(*db));
+        ERRORS[ERR_NO] = "Can't open database: %s", sqlite3_errmsg(*db);
         ERR_NO++;
       } else if(strcmp(OUTPUT_FORMAT, "JSON") == 0)
       {
-        sprintf(ERRORS[ERR_NO], "{\"type\": \"error\",\"component\": \"tasks\",\"action\": \"add_sql\", \"code\": \"%s\"}", sqlite3_errmsg(*db));
+        ERRORS[ERR_NO] = "{\"type\": \"error\",\"component\": \"tasks\",\"action\": \"add_sql\", \"code\": \"%s\"}", sqlite3_errmsg(*db);
         ERR_NO++;
       }
       sqlite3_close(*db);
@@ -111,7 +112,7 @@ int driver_add_category(struct category * category_to_add)
  0 =error
  1 - no_errors
 */
-int driver_category_init()
+int driver_categories_init()
 {
   char query[1000];
   
@@ -131,15 +132,62 @@ int driver_category_init()
 /*1- next row exists
   0 - yu reach end of the function
 */
-int driver_category_next(char row[2][CATEGORY_LEN])
+int driver_category_next(struct category * category_instance)
 {
   int result;
   result = sqlite3_step(STATEMENT);
 			
   if(result == SQLITE_ROW)
 	{
-    strcpy(row[0], (char *)sqlite3_column_text(STATEMENT, 0));
-    strcpy(row[1], (char *)sqlite3_column_text(STATEMENT, 1));
+    strcpy(category_instance->id, (char *)sqlite3_column_text(STATEMENT, 0));
+    strcpy(category_instance->name, (char *)sqlite3_column_text(STATEMENT, 1));
+		return 1;
+	}
+	else
+	{
+    sqlite3_finalize(STATEMENT);
+		return 0;
+	}
+}
+/*
+ 0 =error
+ 1 - no_errors
+*/
+int driver_tasks_init(int limit, char * sort_by, int desc)
+{
+  char query[1000];
+  
+  if(driver_connect(&DB))
+    return 0;
+  if(limit == -1)
+    sprintf(query, "SELECT * FROM tasks ORDER BY %s %s ", sort_by, desc ? "DESC" : "");
+  else
+    sprintf(query, "SELECT * FROM tasks ORDER BY %s %s LIMIT %d", sort_by, desc ? "DESC" : "", limit);
+    
+  if(error_prepare(DB, query, &STATEMENT))
+  {
+    sqlite3_finalize(STATEMENT);
+    sqlite3_close(DB);
+    return -1;
+  }
+  
+  return 1;
+}
+/*1- next row exists
+  0 - yu reach end of the function
+*/
+int driver_task_next(struct task * task_instance)
+{
+  int result;
+  result = sqlite3_step(STATEMENT);
+			
+  if(result == SQLITE_ROW)
+	{
+    strcpy(task_instance->id, (char *)sqlite3_column_text(STATEMENT, 0));
+    strcpy(task_instance->category, (char *)sqlite3_column_text(STATEMENT, 1));
+    task_instance->date = (time_t)sqlite3_column_int(STATEMENT, 2);
+    task_instance->time_needed = sqlite3_column_int(STATEMENT, 3);
+    strcpy(task_instance->desc, (char *)sqlite3_column_text(STATEMENT, 4));
 		return 1;
 	}
 	else

@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <dirent.h>
 
 #include "easy_tasks.h" 
 #include "driver.h"
@@ -41,12 +42,20 @@ int main(int agrc, char * agrv[])
   struct category category_to_add;
   struct task task_to_add;
   
+  DIR* dir = opendir("..");
+  struct dirent* dent;
+  FILE* fptr;  
+  
+  regex_t et_schedule;  
+  regcomp(&et_schedule, "^et_.*$", 0);    
+  
+  
   for(i=1;i<agrc;i++)
   {
     if(strcmp(agrv[i], "-f") == 0)
     {
       if(i+1 < agrc)
-	set_output_format(agrv[i+1]);
+	      set_output_format(agrv[i+1]);
     }
   }
   for(i=1;i<agrc;i++)
@@ -93,23 +102,53 @@ int main(int agrc, char * agrv[])
       throw_errors();
     } else if(strcmp(agrv[i], "-t") == 0)
     {
-      for(j=1;j<agrc;j++)
+      if(i+1 < agrc && agrv[i+1][0] != '-')
       {
-        if(strcmp(agrv[j], "-l") == 0)
+        /*GET sql info about the task*/
+        dir = opendir("/home/hafron/.pal/");
+        if(dir)
         {
-          if(j+1 < agrc && agrv[j+1][0] != '-')
-            limit = atoi(agrv[j+1]);
-        } else if(strcmp(agrv[j], "-d") == 0)
+          while((dent=readdir(dir)))
+          {
+            if( ! regexec(&et_schedule, dent->d_name, 0, NULL, 0) )
+            {
+              puts(dent->d_name);
+              if(fptr = fopen(dent->d_name,"r"))
+              {  
+                fclose(fptr) ;
+              } else
+              {
+                error("CANNOT_OPEN_SCHEDULE_FILE");
+                throw_errors();
+              }
+            }
+          }
+          closedir(dir);
+        } else
         {
-          desc = 1;
-        } else if(strcmp(agrv[j], "-s") == 0)
-        {
-          if(j+1 < agrc && agrv[j+1][0] != '-')
-            strncpy(sort_by, agrv[j+1], COL_TITLE_LEN);
+          error("CANNOT_OPEN_PAL_DIRECTORY");
+          throw_errors();
         }
-      }
+      } else
+      {
+        for(j=1;j<agrc;j++)
+        {
+          if(strcmp(agrv[j], "-l") == 0)
+          {
+            if(j+1 < agrc && agrv[j+1][0] != '-')
+              limit = atoi(agrv[j+1]);
+          } else if(strcmp(agrv[j], "-d") == 0)
+          {
+            desc = 1;
+          } else if(strcmp(agrv[j], "-s") == 0)
+          {
+            if(j+1 < agrc && agrv[j+1][0] != '-')
+              strncpy(sort_by, agrv[j+1], COL_TITLE_LEN);
+          }
+        }
 
-      show_tasks(limit, sort_by, desc);
+        show_tasks(limit, sort_by, desc);
+      }
       throw_errors();
     }
   }
